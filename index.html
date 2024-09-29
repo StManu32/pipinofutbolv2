@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Camino de Pipino al Éxito Futbolístico</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        #game-container {
+            width: 800px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            padding: 20px;
+        }
+        #image-container {
+            width: 100%;
+            height: 300px;
+            background-color: #ddd;
+            background-size: cover;
+            background-position: center;
+            margin-bottom: 20px;
+        }
+        #story-container {
+            margin-bottom: 20px;
+        }
+        #choices-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        #stats-container {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            background-color: #f0f0f0;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="image-container"></div>
+        <div id="story-container"></div>
+        <div id="choices-container"></div>
+        <div id="stats-container"></div>
+    </div>
+
+    <script>
+        const gameState = {
+            location: 'start',
+            stats: {
+                skill: 50,
+                health: 100,
+                motivation: 100,
+                money: 500
+            }
+        };
+
+        const gameData = {
+            start: {
+                text: "Pipino, un joven de 18 años de Rosario, sueña con convertirse en un jugador de fútbol profesional. Está parado frente al Monumento a la Bandera, pensando en su futuro. ¿Qué debería hacer?",
+                image: "/api/placeholder/800/300",
+                choices: [
+                    { text: "Ir al Parque España a practicar", nextLocation: "parqueEspana" },
+                    { text: "Visitar el estadio de Newell's", nextLocation: "estadioNewells" },
+                    { text: "Ir a una fiesta con amigos", nextLocation: "fiesta" }
+                ]
+            },
+            parqueEspana: {
+                text: "Pipino llega al Parque España y ve a un grupo jugando fútbol. Se une al juego y demuestra sus habilidades.",
+                image: "/api/placeholder/800/300",
+                choices: [
+                    { text: "Jugar agresivamente para impresionar", nextLocation: "jugarAgresivo" },
+                    { text: "Jugar en equipo y mostrar deportividad", nextLocation: "jugarEquipo" },
+                    { text: "Desafiar al mejor jugador a un uno contra uno", nextLocation: "desafiarMejor" }
+                ]
+            },
+            estadioNewells: {
+                text: "Pipino visita el estadio de Newell's. Ve que hay pruebas para juveniles.",
+                image: "/api/placeholder/800/300",
+                choices: [
+                    { text: "Inscribirse en las pruebas", nextLocation: "pruebasNewells" },
+                    { text: "Hablar con un cazatalentos", nextLocation: "hablarCazatalentos" },
+                    { text: "Volver a casa a entrenar más", nextLocation: "entrenarCasa" }
+                ]
+            },
+            fiesta: {
+                text: "Pipino va a la fiesta. Sus amigos lo animan a beber y quedarse hasta tarde.",
+                image: "/api/placeholder/800/300",
+                choices: [
+                    { text: "Beber y divertirse toda la noche", nextLocation: "beberMucho" },
+                    { text: "Tomar moderadamente y volver temprano", nextLocation: "beberModerado" },
+                    { text: "Rechazar el alcohol y volver a casa", nextLocation: "rechazarAlcohol" }
+                ]
+            },
+            jugarAgresivo: {
+                text: "Pipino juega agresivamente. Impresiona a algunos, pero se lesiona.",
+                image: "/api/placeholder/800/300",
+                choices: [
+                    { text: "Ignorar el dolor y seguir jugando", nextLocation: "ignorarLesion" },
+                    { text: "Detenerse y buscar atención médica", nextLocation: "atenciónMédica" }
+                ],
+                consequences: { skill: 5, health: -20, motivation: 10 }
+            },
+            jugarEquipo: {
+                text: "Pipino juega en equipo. Todos disfrutan del partido y un entrenador local lo nota.",
+                image: "/api/placeholder/800/300",
+                choices: [
+                    { text: "Hablar con el entrenador", nextLocation: "hablarEntrenador" },
+                    { text: "Seguir jugando con el grupo", nextLocation: "seguirJugando" }
+                ],
+                consequences: { skill: 10, health: 5, motivation: 15 }
+            },
+            // Añade más situaciones aquí siguiendo el mismo patrón
+        };
+
+        function updateGame(location) {
+            if (!gameData[location]) {
+                console.error(`La ubicación "${location}" no está definida en gameData.`);
+                return;
+            }
+
+            gameState.location = location;
+            const currentLocation = gameData[location];
+            
+            document.getElementById('story-container').innerText = currentLocation.text;
+            document.getElementById('image-container').style.backgroundImage = `url('${currentLocation.image}')`;
+            
+            const choicesContainer = document.getElementById('choices-container');
+            choicesContainer.innerHTML = '';
+            
+            currentLocation.choices.forEach(choice => {
+                const button = document.createElement('button');
+                button.innerText = choice.text;
+                button.onclick = () => {
+                    updateGame(choice.nextLocation);
+                    updateStats(currentLocation.consequences);
+                };
+                choicesContainer.appendChild(button);
+            });
+
+            updateStatsDisplay();
+            checkGameOver();
+        }
+
+        function updateStats(consequences) {
+            if (consequences) {
+                for (let stat in consequences) {
+                    gameState.stats[stat] += consequences[stat];
+                    gameState.stats[stat] = Math.max(0, Math.min(100, gameState.stats[stat]));
+                }
+            }
+        }
+
+        function updateStatsDisplay() {
+            const statsContainer = document.getElementById('stats-container');
+            statsContainer.innerHTML = '';
+            for (let stat in gameState.stats) {
+                const statElement = document.createElement('div');
+                statElement.innerText = `${stat.charAt(0).toUpperCase() + stat.slice(1)}: ${gameState.stats[stat]}`;
+                statsContainer.appendChild(statElement);
+            }
+        }
+
+        function checkGameOver() {
+            if (gameState.stats.health <= 0) {
+                endGame("Pipino ha sufrido una lesión grave y su carrera futbolística ha terminado.");
+            } else if (gameState.stats.motivation <= 0) {
+                endGame("Pipino ha perdido toda motivación y abandona su sueño de ser futbolista profesional.");
+            } else if (gameState.stats.money <= 0) {
+                endGame("Pipino se queda sin dinero y tiene que buscar un trabajo de tiempo completo, abandonando su sueño futbolístico.");
+            } else if (gameState.stats.skill >= 100) {
+                endGame("¡Felicidades! Pipino ha sido fichado por un equipo profesional y comienza su carrera como futbolista.", true);
+            }
+        }
+
+        function endGame(message, isVictory = false) {
+            document.getElementById('story-container').innerText = message;
+            document.getElementById('choices-container').innerHTML = '';
+            document.getElementById('image-container').style.backgroundImage = `url('/api/placeholder/800/300')`;
+            const restartButton = document.createElement('button');
+            restartButton.innerText = "Reiniciar juego";
+            restartButton.onclick = () => {
+                gameState.location = 'start';
+                gameState.stats = { skill: 50, health: 100, motivation: 100, money: 500 };
+                updateGame('start');
+            };
+            document.getElementById('choices-container').appendChild(restartButton);
+        }
+
+        // Iniciar el juego
+        document.addEventListener('DOMContentLoaded', () => {
+            updateGame('start');
+        });
+    </script>
+</body>
+</html>
